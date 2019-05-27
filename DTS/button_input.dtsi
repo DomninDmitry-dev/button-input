@@ -1,0 +1,35 @@
+/dts-v1/;
+/plugin/;
+
+//IRQ_TYPE_LEVEL_HIGH	= 0x00000004,
+//IRQ_TYPE_LEVEL_LOW	= 0x00000008,
+
+//GIC_SPI = 0
+//GIC_PPI = 1
+
+/ {
+	compatible = "allwinner,sun8i-h3";
+	
+	fragment@0 {
+		target = <&pio>;
+		__overlay__ {
+			gpio_in_opc: gpio_in_opc@0 {
+			pins = "PA3";
+			function = "gpio_in";
+			};
+		};
+	};
+	
+	fragment@1 {
+		target-path = "/";
+		__overlay__ {
+            gpio_btn_input@0 {
+                    compatible = "opi,button-input";
+                    pinctrl-names = "default";
+                    pinctrl-0 = <&gpio_in_opc>;
+                    btn-gpios = <&pio 0 3 0>; // PA3
+                    status = "okay";
+            };
+		};
+	};
+};
