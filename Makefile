@@ -36,7 +36,7 @@ test: $(TARGET_PROG).cpp
 ifeq ($(shell uname -r), 4.14.91-sunxi)
 	g++ $(TARGET_PROG).cpp -o $(TARGET_PROG) $(REMFLAGS)
 else
-        arm-unknown-linux-gnueabihf-g++ $(TARGET_PROG).cpp -o $(TARGET_PROG) $(REMFLAGS)
+	$(COMPILER)g++ $(TARGET_PROG).cpp -o $(TARGET_PROG) $(REMFLAGS)
 endif
 
 copy_dtbo:
@@ -51,9 +51,10 @@ compile_dts:
 	@./mod.sh compile-dts
 compile_dtsi:
 	@./mod.sh compile-dtsi
-
 reboot_dev:
 	@./mod.sh reboot
+copy_prog:
+	@./mod.sh copy-prog
 
 clean:
 	@rm -f *.o .*.cmd .*.flags *.mod.c *.order *.dwo *.mod.dwo .*.dwo

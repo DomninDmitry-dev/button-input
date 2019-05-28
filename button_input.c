@@ -39,14 +39,13 @@ static void polled_btn_poll(struct input_polled_dev *poll_dev)
 	struct poll_btn_data *pdata = poll_dev->private;
 	input_report_key(poll_dev->input, BTN_0, gpiod_get_value(pdata->btn) & 1);
 	input_sync(poll_dev->input);
-	dev_info(&pdata->pdev->dev, "polled device()\n");
+	//dev_info(&pdata->pdev->dev, "polled device()\n");
 }
 /*----------------------------------------------------------------------------*/
 static int polled_btn_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct poll_btn_data *pdata;
-	struct input_polled_dev *poll_dev;
 	struct input_dev *input_dev;
 
 	dev_info(&pdev->dev, "Starting module\n");
@@ -57,8 +56,8 @@ static int polled_btn_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	poll_dev = input_allocate_polled_device();
-	if (!poll_dev){
+	pdata->poll_dev = input_allocate_polled_device();
+	if (!pdata->poll_dev){
 		goto fail;
 	}
 
@@ -68,14 +67,14 @@ static int polled_btn_probe(struct platform_device *pdev)
 				__func__, PTR_ERR(pdata->btn));
 		goto fail;
 	}
-	poll_dev->private = pdata;
-	poll_dev->poll_interval = 200; // Poll every 200ms
-	poll_dev->poll = polled_btn_poll;
-	poll_dev->open = polled_btn_open;
-	poll_dev->close = polled_btn_close;
-	pdata->poll_dev = poll_dev;
 
-	input_dev = poll_dev->input;
+	pdata->poll_dev->private = pdata;
+	pdata->poll_dev->poll_interval = 200; // Poll every 200ms
+	pdata->poll_dev->poll = polled_btn_poll;
+	pdata->poll_dev->open = polled_btn_open;
+	pdata->poll_dev->close = polled_btn_close;
+
+	input_dev = pdata->poll_dev->input;
 	input_dev->name = "Packt input pulled Btn";
 	input_dev->dev.parent = &pdev->dev;
 
@@ -86,7 +85,7 @@ static int polled_btn_probe(struct platform_device *pdev)
 	ret = input_register_polled_device(pdata->poll_dev);
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to register input polled device\n");
-		input_free_polled_device(poll_dev);
+		input_free_polled_device(pdata->poll_dev);
 		goto fail;
 	}
 
