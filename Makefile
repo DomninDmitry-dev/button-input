@@ -1,12 +1,22 @@
-ifeq ($(shell uname -r), 4.14.91-sunxi)
+DEV_KERNEL_DIR = 4.19.59-sunxi
+HOST_KERNEL_DIR = orange-pi-4.19.59
+PROJ_NAME = driver-button-input
+DEV_ROOT_IP = root@192.168.0.120
+MOD_DIR = gpio
+DTB_NAME = sun8i-h3-orangepi-one
+USER_DIR=dmitry
+
+ifeq ($(shell uname -r), $(DEV_KERNEL_DIR))
 	KDIR = /lib/modules/$(shell uname -r)/build
 else
-	KDIR = $(HOME)/CreateImageOP/cache/sources/linux-mainline/linux-4.14.y
+	#KDIR = $(HOME)/CreateImage/cache/sources/linux-mainline/linux-4.19.y
+	KDIR = $(HOME)/Kernels/$(HOST_KERNEL_DIR)
 endif
+
 ARCH = arm
 CCFLAGS = -C
-COMPILER = arm-unknown-linux-gnueabihf-
-//COMPILER = arm-linux-gnueabihf-
+COMPILER_PROG = arm-unknown-linux-gnueabihf-
+COMPILER = arm-linux-gnueabihf-
 PWD = $(shell pwd)
 TARGET_MOD = button_input
 TARGET_PROG = test
@@ -26,35 +36,35 @@ obj-m   := $(TARGET_MOD).o
 CFLAGS_$(TARGET_MOD).o := -DDEBUG
 
 all:
-ifeq ($(shell uname -r), 4.14.91-sunxi)
+ifeq ($(shell uname -r), $(DEV_KERNEL_DIR))
 	$(MAKE) $(CCFLAGS) $(KDIR) M=$(PWD) modules
 else
 	$(MAKE) $(CCFLAGS) $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(COMPILER) modules
 endif
 
 test: $(TARGET_PROG).cpp
-ifeq ($(shell uname -r), 4.14.91-sunxi)
+ifeq ($(shell uname -r), $(DEV_KERNEL_DIR))
 	g++ $(TARGET_PROG).cpp -o $(TARGET_PROG) $(REMFLAGS)
 else
-	$(COMPILER)g++ $(TARGET_PROG).cpp -o $(TARGET_PROG) $(REMFLAGS)
+	$(COMPILER_PROG)g++ $(TARGET_PROG).cpp -o $(TARGET_PROG) $(REMFLAGS)
 endif
 
 copy_dtbo:
-	@./mod.sh copy-dtbo
+	@./commands.sh -c copy-dtbo -projname $(PROJ_NAME) -devip $(DEV_ROOT_IP)
 copy_dtb:
-	@./mod.sh copy-dtb
+	@./commands.sh -c copy-dtb -hostdir $(HOST_KERNEL_DIR) -devip $(DEV_ROOT_IP) -dtbname $(DTB_NAME)
 del_mod:
-	@./mod.sh delete-ko
+	@./commands.sh -c delete-ko -devdir $(DEV_KERNEL_DIR) -devip $(DEV_ROOT_IP) -moddir $(MOD_DIR)
 copy_mod:
-	@./mod.sh copy-ko
+	@./commands.sh -c copy-ko -projname $(PROJ_NAME) -devdir $(DEV_KERNEL_DIR) -devip $(DEV_ROOT_IP) -moddir $(MOD_DIR)
 compile_dts:
-	@./mod.sh compile-dts
+	@./commands.sh -c compile-dts -projname $(PROJ_NAME) -hostdir $(HOST_KERNEL_DIR) -comp $(COMPILER) -dtbname $(DTB_NAME)
 compile_dtsi:
-	@./mod.sh compile-dtsi
+	@./commands.sh -c compile-dtsi -projname $(PROJ_NAME)
 reboot_dev:
-	@./mod.sh reboot
+	@./commands.sh -c reboot -devip $(DEV_ROOT_IP)
 copy_prog:
-	@./mod.sh copy-prog
+	@./commands.sh -c copy-prog -projname $(PROJ_NAME) -devip $(DEV_ROOT_IP) -userdir $(USER_DIR)
 
 clean:
 	@rm -f *.o .*.cmd .*.flags *.mod.c *.order *.dwo *.mod.dwo .*.dwo

@@ -12,7 +12,7 @@
 #include <linux/input.h>
 #include <sys/select.h>
 
-#define INPUT_DEVICE "/dev/input/event0"
+#define INPUT_DEVICE "/dev/input/event5"
 
 int main(int argc, char **argv)
 {
@@ -44,6 +44,9 @@ int main(int argc, char **argv)
 			if(ev.code == BTN_0) {
 				/* it concerns our button */
 				printf("Value = %d\n", ev.value);
+				if(ev.value == 1) {
+					system("/home/dmitry/.bin/screen.sh");
+				}
 			}
 		}
 	}

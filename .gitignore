@@ -12,8 +12,7 @@
 *.sh
 /DTS/*
 !/DTS/button_input.dtsi
+/DTS_v4.14
 /.tmp_versions
-/arch-include
-/include
 /.settings
 /.tracecompass

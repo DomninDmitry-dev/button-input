@@ -39,7 +39,7 @@ static void polled_btn_poll(struct input_polled_dev *poll_dev)
 	struct poll_btn_data *pdata = poll_dev->private;
 	input_report_key(poll_dev->input, BTN_0, gpiod_get_value(pdata->btn) & 1);
 	input_sync(poll_dev->input);
-	//dev_info(&pdata->pdev->dev, "polled device()\n");
+	dev_info(&pdata->pdev->dev, "polled device()\n");
 }
 /*----------------------------------------------------------------------------*/
 static int polled_btn_probe(struct platform_device *pdev)
@@ -56,11 +56,15 @@ static int polled_btn_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
+	pdata->pdev = pdev;
+
+	dev_info(&pdev->dev, "input_allocate_polled_device\n");
 	pdata->poll_dev = input_allocate_polled_device();
 	if (!pdata->poll_dev){
 		goto fail;
 	}
 
+	dev_info(&pdev->dev, "devm_gpiod_get\n");
 	pdata->btn = devm_gpiod_get(&pdev->dev, "btn", GPIOD_IN);
 	if (IS_ERR(pdata->btn)) {
 		dev_err(&pdev->dev, "%s() unable to get led GPIO: %ld\n",
@@ -82,6 +86,7 @@ static int polled_btn_probe(struct platform_device *pdev)
 	set_bit(EV_KEY, input_dev->evbit);
 	set_bit(BTN_0, input_dev->keybit); /* buttons */
 
+	dev_info(&pdev->dev, "input_register_polled_device\n");
 	ret = input_register_polled_device(pdata->poll_dev);
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to register input polled device\n");
@@ -89,13 +94,12 @@ static int polled_btn_probe(struct platform_device *pdev)
 		goto fail;
 	}
 
-	pdata->pdev = pdev;
 	platform_set_drvdata(pdev, pdata);
 	return 0;
 
 fail:
-	devm_kfree(&pdev->dev, pdata);
 	dev_err(&pdev->dev, "Probe fail!\n");
+	devm_kfree(&pdev->dev, pdata);
 	return -1;
 }
 /*----------------------------------------------------------------------------*/
